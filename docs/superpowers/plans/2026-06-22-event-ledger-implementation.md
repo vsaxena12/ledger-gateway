@@ -1489,8 +1489,6 @@ public record EventRequest(
 ```java
 package com.agiletal.ledger.gateway.service;
 
-import com.agiletal.ledger.gateway.domain.EventType;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -1498,7 +1496,7 @@ import java.util.Map;
 public record EventResponse(
         String eventId,
         String accountId,
-        EventType type,
+        String type,                  // "CREDIT" or "DEBIT"
         BigDecimal amount,
         String currency,
         OffsetDateTime eventTimestamp,
@@ -1506,6 +1504,10 @@ public record EventResponse(
         boolean appliedToAccount
 ) {}
 ```
+
+Note: `type` is `String` (not the `EventType` enum) so JSON serialization
+emits a plain string without Jackson registering an enum module. Task 11's
+WebMvcTest asserts on the JSON string directly.
 
 **Step 3:** Run test to confirm it fails
 
