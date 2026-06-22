@@ -68,3 +68,10 @@ resilience4j:
 
 logging:
   config: classpath:logback-spring.xml
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:h2:file:./.data/event-gateway/gateway;AUTO_SERVER=TRUE;MODE=PostgreSQL
