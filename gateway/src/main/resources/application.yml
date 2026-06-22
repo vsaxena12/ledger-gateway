@@ -65,6 +65,12 @@ resilience4j:
       accountService:
         maxConcurrentCalls: 20
         maxWaitDuration: 0
+  ratelimiter:
+    instances:
+      accountService:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
 
 logging:
   config: classpath:logback-spring.xml
