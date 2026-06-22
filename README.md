@@ -70,12 +70,44 @@ gateway's local data.
 
 ## Tracing
 
-OpenTelemetry auto-instrumentation propagates trace context from the
-gateway to the account-service via the W3C `traceparent` header. Both
-services include `traceId` and `spanId` in their JSON logs.
+Custom trace propagation using W3C `traceparent` headers. Trace IDs flow
+from the gateway through to the account-service and are logged in JSON
+format by both services.
+
+When running with Docker Compose, traces are also sent to Jaeger for
+visualization at http://localhost:16686.
 
 ## Observability
 
 - JSON logs: `application.log`
 - Metrics: `GET /actuator/prometheus`
 - Health: `GET /actuator/health`
+
+## Bonus Features
+
+### Tracing Visualization (Jaeger)
+
+Start all services including the OpenTelemetry Collector and Jaeger:
+
+```bash
+docker compose up --build
+```
+
+Access the Jaeger UI at http://localhost:16686 to visualize traces.
+
+### Rate Limiting
+
+The gateway uses Resilience4j RateLimiter on the account-service client,
+limiting to 50 requests per second.
+
+### Async Fallback Queue
+
+When the account-service is unavailable, events are persisted locally with
+`appliedToAccount=false`. A background scheduled task retries them every 30
+seconds (max 5 retries). This prevents event loss during outages.
+
+### Prometheus Metrics
+
+- `GET /actuator/prometheus` on both services
+- Custom metrics: `gateway.events.received`, `gateway.account_service.latency`
+- Resilience4j circuit breaker state gauges automatically reported
