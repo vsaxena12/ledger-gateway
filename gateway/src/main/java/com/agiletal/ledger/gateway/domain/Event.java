@@ -41,6 +41,12 @@ public class Event {
     @Column(name = "applied_to_account", nullable = false)
     private boolean appliedToAccount;
 
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount = 0;
+
+    @Column(name = "last_retry_at")
+    private OffsetDateTime lastRetryAt;
+
     protected Event() {}
 
     public Event(String eventId, String accountId, EventType type, BigDecimal amount,
@@ -55,6 +61,8 @@ public class Event {
         this.metadata = metadata;
         this.receivedAt = receivedAt;
         this.appliedToAccount = false;
+        this.retryCount = 0;
+        this.lastRetryAt = null;
     }
 
     public void markApplied() { this.appliedToAccount = true; }
@@ -69,4 +77,9 @@ public class Event {
     public String getMetadata() { return metadata; }
     public OffsetDateTime getReceivedAt() { return receivedAt; }
     public boolean isAppliedToAccount() { return appliedToAccount; }
+    public int getRetryCount() { return retryCount; }
+    public OffsetDateTime getLastRetryAt() { return lastRetryAt; }
+
+    public void setRetryCount(int retryCount) { this.retryCount = retryCount; }
+    public void setLastRetryAt(OffsetDateTime lastRetryAt) { this.lastRetryAt = lastRetryAt; }
 }

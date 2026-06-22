@@ -8,7 +8,10 @@ CREATE TABLE IF NOT EXISTS events (
   event_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
   metadata VARCHAR(2000),
   received_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  applied_to_account BOOLEAN NOT NULL DEFAULT FALSE
+  applied_to_account BOOLEAN NOT NULL DEFAULT FALSE,
+  retry_count INT NOT NULL DEFAULT 0,
+  last_retry_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_account_ts ON events(account_id, event_timestamp);
+CREATE INDEX IF NOT EXISTS idx_events_pending ON events(applied_to_account, retry_count);

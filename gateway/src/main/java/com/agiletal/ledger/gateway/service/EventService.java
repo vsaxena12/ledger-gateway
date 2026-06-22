@@ -2,8 +2,10 @@ package com.agiletal.ledger.gateway.service;
 
 import com.agiletal.ledger.gateway.domain.Event;
 import com.agiletal.ledger.gateway.domain.EventRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +19,13 @@ public class EventService {
 
     private final EventRepository repo;
     private final AccountClient accountClient;
+    private final MeterRegistry meterRegistry;
 
-    public EventService(EventRepository repo, AccountClient accountClient) {
+    public EventService(EventRepository repo, AccountClient accountClient,
+                        MeterRegistry meterRegistry) {
         this.repo = repo;
         this.accountClient = accountClient;
+        this.meterRegistry = meterRegistry;
     }
 
     @Transactional
@@ -28,7 +33,8 @@ public class EventService {
         var existing = repo.findByEventId(req.eventId());
         if (existing.isPresent()) {
             log.info("duplicate event {} - returning original", req.eventId());
-            return toResponse(existing.get());
+            meterRegistry.counter("gateway.events.received", "result", "duplicate").increment();
+            return toResponse(existing.get(), true);
         }
         Event event = new Event(
                 req.eventId(), req.accountId(), req.type(), req.amount(),
@@ -42,12 +48,36 @@ public class EventService {
                     req.eventTimestamp());
             event.markApplied();
             repo.save(event);
+            meterRegistry.counter("gateway.events.received", "result", "created").increment();
         } catch (AccountServiceUnavailableException ex) {
-            log.warn("account-service unavailable for event {}; rolling back persist",
+            log.warn("account-service unavailable for event {}; queued for async retry",
                     req.eventId());
-            throw ex;
+            // Event stays persisted with appliedToAccount=false for async retry
         }
-        return toResponse(event);
+        return toResponse(event, false);
+    }
+
+    @Scheduled(fixedDelay = 30000) // every 30 seconds
+    @Transactional
+    public void retryPendingEvents() {
+        List<Event> pending = repo.findByAppliedToAccountAndRetryCountLessThan(false, 5);
+        for (Event event : pending) {
+            try {
+                accountClient.apply(event.getAccountId(), event.getEventId(),
+                        event.getType().name(), event.getAmount(), event.getCurrency(),
+                        event.getEventTimestamp());
+                event.markApplied();
+                repo.save(event);
+                log.info("async retry succeeded for event {}", event.getEventId());
+                meterRegistry.counter("gateway.events.async_retry", "outcome", "success").increment();
+            } catch (Exception ex) {
+                log.warn("async retry failed for event {} (attempt {})", event.getEventId(), event.getRetryCount() + 1);
+                event.setRetryCount(event.getRetryCount() + 1);
+                event.setLastRetryAt(OffsetDateTime.now());
+                repo.save(event);
+                meterRegistry.counter("gateway.events.async_retry", "outcome", "failure").increment();
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -62,9 +92,13 @@ public class EventService {
     }
 
     private EventResponse toResponse(Event e) {
+        return toResponse(e, false);
+    }
+
+    private EventResponse toResponse(Event e, boolean duplicate) {
         return new EventResponse(
                 e.getEventId(), e.getAccountId(), e.getType().name(),
                 e.getAmount(), e.getCurrency(), e.getEventTimestamp(),
-                null, e.isAppliedToAccount());
+                null, e.isAppliedToAccount(), duplicate);
     }
 }

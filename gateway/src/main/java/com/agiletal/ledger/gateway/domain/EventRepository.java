@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByEventId(String eventId);
     List<Event> findByAccountIdOrderByEventTimestampAsc(String accountId);
+    List<Event> findByAppliedToAccountAndRetryCountLessThan(boolean appliedToAccount, int retryCount);
 }

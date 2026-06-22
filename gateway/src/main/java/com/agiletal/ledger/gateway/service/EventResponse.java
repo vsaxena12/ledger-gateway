@@ -12,5 +12,6 @@ public record EventResponse(
         String currency,
         OffsetDateTime eventTimestamp,
         Map<String, Object> metadata,
-        boolean appliedToAccount
+        boolean appliedToAccount,
+        boolean duplicate
 ) {}
