@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: account-service
+  datasource:
+    url: jdbc:h2:file:./.data/account-service/account;AUTO_SERVER=TRUE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/migration/V1__init.sql
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    db:
+      enabled: true
+
+logging:
+  config: classpath:logback-spring.xml
