@@ -1,0 +1,12 @@
+target/
+*.class
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.data/
+*.h2.db
+*.mv.db
+*.trace.db
+build/
+out/
