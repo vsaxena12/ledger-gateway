@@ -1,6 +1,7 @@
 package com.agiletal.ledger.gateway.service;
 
 import com.agiletal.ledger.gateway.domain.*;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -12,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -20,10 +20,11 @@ class EventServiceTest {
 
     EventRepository repo = mock(EventRepository.class);
     AccountClient client = mock(AccountClient.class);
+    MeterRegistry meterRegistry = mock(MeterRegistry.class, RETURNS_DEEP_STUBS);
     EventService service;
 
     @BeforeEach
-    void setup() { service = new EventService(repo, client); }
+    void setup() { service = new EventService(repo, client, meterRegistry); }
 
     private EventRequest req(String eid) {
         return new EventRequest(eid, "acct-1", EventType.CREDIT,
@@ -66,14 +67,16 @@ class EventServiceTest {
     }
 
     @Test
-    void account_service_failure_bubbles_up_and_event_persists() {
+    void account_service_failure_does_not_throw_and_event_persists_locally() {
+        // With async fallback, AccountServiceUnavailableException is caught
+        // and the event persists locally with appliedToAccount=false
         when(repo.findByEventId("e1")).thenReturn(Optional.empty());
         when(repo.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
         when(client.apply(any(), any(), any(), any(), any(), any()))
                 .thenThrow(new AccountServiceUnavailableException("down"));
 
-        assertThatThrownBy(() -> service.submit(req("e1")))
-                .isInstanceOf(AccountServiceUnavailableException.class);
+        var resp = service.submit(req("e1"));
+        assertThat(resp.eventId()).isEqualTo("e1");
     }
 
     @Test

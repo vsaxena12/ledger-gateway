@@ -24,7 +24,8 @@ public class EventController {
         EventResponse resp = service.submit(new EventRequest(
                 dto.eventId(), dto.accountId(), dto.type(), dto.amount(),
                 dto.currency(), dto.eventTimestamp(), dto.metadata()));
-        HttpStatus status = resp.appliedToAccount() ? HttpStatus.CREATED : HttpStatus.OK;
+        HttpStatus status = resp.duplicate() ? HttpStatus.OK :
+                resp.appliedToAccount() ? HttpStatus.CREATED : HttpStatus.SERVICE_UNAVAILABLE;
         return ResponseEntity.status(status).body(resp);
     }
 

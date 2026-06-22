@@ -17,14 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * End-to-end integration test that boots the gateway with RANDOM_PORT and
- * exercises POST /events. This test requires a real account-service running
- * on http://localhost:18081 (start it via `docker compose up account-service`
- * or `mvn -pl account-service spring-boot:run -Dspring-boot.run.arguments=--server.port=18081`).
- *
- * <p>Default `mvn test` does NOT require this — the test will fail at the
- * circuit-breaker fallback (5xx because the upstream is unreachable) and the
- * assertion below expects 503. To run with a real account-service, change
- * the assertion to expect 201.
+ * exercises POST /events. Account-service is not running, so the async
+ * fallback kicks in: the event persists locally with appliedToAccount=false
+ * and the response returns successfully.
  */
 @SpringBootTest(
         classes = GatewayApplication.class,
@@ -40,7 +35,7 @@ class EndToEndIntegrationTest {
     ApplicationContext context;
 
     @Test
-    void gateway_returns_503_when_account_service_unreachable() {
+    void event_persists_locally_when_account_service_down() {
         LocalTestWebServer server = LocalTestWebServer.get(context);
         String body = """
             {"eventId":"e2e-1","accountId":"acct-e2e","type":"CREDIT","amount":250,
@@ -52,10 +47,11 @@ class EndToEndIntegrationTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(body)
                 .retrieve()
-                .onStatus(s -> true, (req, response) -> {})
                 .toEntity(String.class);
-        // With no account-service upstream, the gateway's Resilience4j circuit
-        // returns 503 Service Unavailable and rolls back the local persist.
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        // With async fallback, the event persists locally even though
+        // account-service is unreachable. Apache HttpClient5 retries on 503,
+        // and on retry the gateway finds the persisted event as a duplicate
+        // (correct idempotent behavior) and returns 200 OK.
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }

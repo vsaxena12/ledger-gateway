@@ -29,7 +29,7 @@ class GatewayControllerWebMvcTest {
     void post_event_201_on_new() throws Exception {
         when(service.submit(any())).thenReturn(new EventResponse(
                 "e1", "a1", "CREDIT", new BigDecimal("100"), "USD",
-                OffsetDateTime.parse("2026-05-15T14:02:11Z"), null, true));
+                OffsetDateTime.parse("2026-05-15T14:02:11Z"), null, true, false));
         mvc.perform(post("/events").contentType(MediaType.APPLICATION_JSON).content("""
             {"eventId":"e1","accountId":"a1","type":"CREDIT","amount":100,
              "currency":"USD","eventTimestamp":"2026-05-15T14:02:11Z"}
@@ -41,7 +41,7 @@ class GatewayControllerWebMvcTest {
     void post_event_200_on_duplicate() throws Exception {
         when(service.submit(any())).thenReturn(new EventResponse(
                 "e1", "a1", "CREDIT", new BigDecimal("100"), "USD",
-                OffsetDateTime.parse("2026-05-15T14:02:11Z"), null, false));
+                OffsetDateTime.parse("2026-05-15T14:02:11Z"), null, false, true));
         mvc.perform(post("/events").contentType(MediaType.APPLICATION_JSON).content("""
             {"eventId":"e1","accountId":"a1","type":"CREDIT","amount":100,
              "currency":"USD","eventTimestamp":"2026-05-15T14:02:11Z"}
