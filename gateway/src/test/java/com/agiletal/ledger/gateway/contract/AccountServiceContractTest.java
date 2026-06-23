@@ -1,5 +1,6 @@
 package com.agiletal.ledger.gateway.contract;
 
+import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
@@ -18,7 +19,7 @@ import static au.com.dius.pact.consumer.dsl.LambdaDsl.newJsonBody;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(PactConsumerTestExt.class)
-@PactTestFor(providerName = "account-service", port = 8082)
+@PactTestFor(providerName = "account-service")
 class AccountServiceContractTest {
 
     @Pact(consumer = "event-gateway")
@@ -51,9 +52,9 @@ class AccountServiceContractTest {
 
     @Test
     @PactTestFor(pactMethod = "createTransactionPact")
-    void shouldCallAccountServiceWithCorrectRequestAndHandleResponse() {
+    void shouldCallAccountServiceWithCorrectRequestAndHandleResponse(MockServer mockServer) {
         RestClient restClient = RestClient.builder()
-                .baseUrl("http://localhost:8082")
+                .baseUrl(mockServer.getUrl())
                 .build();
         AccountClient client = new AccountClient(restClient);
 
@@ -98,9 +99,9 @@ class AccountServiceContractTest {
 
     @Test
     @PactTestFor(pactMethod = "createDebitTransactionPact")
-    void shouldHandleDebitTransactionCorrectly() {
+    void shouldHandleDebitTransactionCorrectly(MockServer mockServer) {
         RestClient restClient = RestClient.builder()
-                .baseUrl("http://localhost:8082")
+                .baseUrl(mockServer.getUrl())
                 .build();
         AccountClient client = new AccountClient(restClient);
 
