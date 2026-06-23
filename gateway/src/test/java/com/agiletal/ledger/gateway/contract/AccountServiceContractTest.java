@@ -18,7 +18,7 @@ import static au.com.dius.pact.consumer.dsl.LambdaDsl.newJsonBody;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(PactConsumerTestExt.class)
-@PactTestFor(providerName = "account-service", port = "8082")
+@PactTestFor(providerName = "account-service", port = 8082)
 class AccountServiceContractTest {
 
     @Pact(consumer = "event-gateway")

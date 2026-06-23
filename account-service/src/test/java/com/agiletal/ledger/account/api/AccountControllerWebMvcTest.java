@@ -1,6 +1,5 @@
 package com.agiletal.ledger.account.api;
 
-import com.agiletal.ledger.account.api.dto.TransactionRequest;
 import com.agiletal.ledger.account.domain.TransactionType;
 import com.agiletal.ledger.account.service.AccountService;
 import org.junit.jupiter.api.Test;

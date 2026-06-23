@@ -1,7 +1,6 @@
 package com.agiletal.ledger.account.api;
 
 import com.agiletal.ledger.account.api.dto.*;
-import com.agiletal.ledger.account.domain.Transaction;
 import com.agiletal.ledger.account.service.AccountService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
