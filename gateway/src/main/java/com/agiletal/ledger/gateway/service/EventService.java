@@ -41,10 +41,15 @@ public class EventService {
             meterRegistry.counter("gateway.events.received", "result", "duplicate").increment();
             return toResponse(existing.get(), true);
         }
+        String metadataJson = null;
+        if (req.metadata() != null) {
+            try { metadataJson = objectMapper.writeValueAsString(req.metadata()); }
+            catch (Exception ex) { log.warn("failed to serialize metadata: {}", ex.getMessage()); }
+        }
         Event event = new Event(
                 req.eventId(), req.accountId(), req.type(), req.amount(),
                 req.currency(), req.eventTimestamp(),
-                req.metadata() == null ? null : req.metadata().toString(),
+                metadataJson,
                 OffsetDateTime.now());
         repo.save(event);
         try {
