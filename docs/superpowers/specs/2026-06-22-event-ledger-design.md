@@ -18,30 +18,30 @@ Micrometer/Prometheus, Docker Compose.
 
 ```mermaid
 graph LR
-    C[Client / Browser] -->|HTTP POST/GET| GW[Event Gateway<br/>:8080]
-    GW -->|REST + traceparent| AS[Account Service<br/>:8081]
-    GW -->[(H2 File<br/>events)]
-    AS -->[(H2 File<br/>accounts+transactions)]
+    C[Client / Browser] -->|HTTP POST/GET| GW[Event Gateway :8080]
+    GW -->|REST + traceparent| AS[Account Service :8081]
+    GW -->[(H2 File events)]
+    AS -->[(H2 File accounts+transactions)]
 
     subgraph Resilience4j[Resilience4j on Gateway→AS]
-        RT[Retry<br/>3 attempts, exp backoff]
-        BH[Bulkhead<br/>Semaphore, max 20]
-        CB[Circuit Breaker<br/>50% threshold, 10s open]
-        RL[Rate Limiter<br/>50 req/s]
+        RT[Retry 3 attempts, exp backoff]
+        BH[Bulkhead Semaphore, max 20]
+        CB[Circuit Breaker 50% threshold, 10s open]
+        RL[Rate Limiter 50 req/s]
     end
     GW --> Res4j[Resilience4j Decorator Chain]
     Res4j --> AS
 
     subgraph Observability
-        LOG[JSON Logs<br/>traceId + spanId]
-        MTR[Micrometer<br/>/actuator/prometheus]
-        HTH[Health<br/>/actuator/health]
+        LOG[JSON Logs traceId + spanId]
+        MTR[Micrometer /actuator/prometheus]
+        HTH[Health /actuator/health]
     end
     GW & AS --> LOG & MTR & HTH
 
     subgraph BonusTraces[Bonus: Trace Visualization]
-        OC[OTel Collector<br/>:4317]
-        JGR[Jaeger UI<br/>:16686]
+        OC[OTel Collector :4317]
+        JGR[Jaeger UI :16686]
     end
     GW & AS -->|OTLP| OC --> JGR
 ```
