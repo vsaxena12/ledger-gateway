@@ -20,10 +20,10 @@ Micrometer/Prometheus, Docker Compose.
 graph LR
     C[Client / Browser] -->|HTTP POST/GET| GW[Event Gateway :8080]
     GW -->|REST + traceparent| AS[Account Service :8081]
-    GW -->[(H2 File events)]
-    AS -->[(H2 File accounts+transactions)]
+    GW -->(H2 DB events)
+    AS -->(H2 DB accounts+tx)
 
-    subgraph Resilience4j[Resilience4j on Gateway→AS]
+    subgraph Resilience4j[Resilience4j on Gateway to AS]
         RT[Retry 3 attempts, exp backoff]
         BH[Bulkhead Semaphore, max 20]
         CB[Circuit Breaker 50% threshold, 10s open]
