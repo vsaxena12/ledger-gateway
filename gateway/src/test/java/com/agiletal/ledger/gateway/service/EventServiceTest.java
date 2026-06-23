@@ -1,6 +1,7 @@
 package com.agiletal.ledger.gateway.service;
 
 import com.agiletal.ledger.gateway.domain.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,10 +22,11 @@ class EventServiceTest {
     EventRepository repo = mock(EventRepository.class);
     AccountClient client = mock(AccountClient.class);
     MeterRegistry meterRegistry = mock(MeterRegistry.class, RETURNS_DEEP_STUBS);
+    ObjectMapper objectMapper = new ObjectMapper();
     EventService service;
 
     @BeforeEach
-    void setup() { service = new EventService(repo, client, meterRegistry); }
+    void setup() { service = new EventService(repo, client, meterRegistry, objectMapper); }
 
     private EventRequest req(String eid) {
         return new EventRequest(eid, "acct-1", EventType.CREDIT,

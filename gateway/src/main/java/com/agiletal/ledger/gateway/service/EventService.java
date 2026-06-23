@@ -9,8 +9,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EventService {
@@ -20,12 +23,14 @@ public class EventService {
     private final EventRepository repo;
     private final AccountClient accountClient;
     private final MeterRegistry meterRegistry;
+    private final ObjectMapper objectMapper;
 
     public EventService(EventRepository repo, AccountClient accountClient,
-                        MeterRegistry meterRegistry) {
+                        MeterRegistry meterRegistry, ObjectMapper objectMapper) {
         this.repo = repo;
         this.accountClient = accountClient;
         this.meterRegistry = meterRegistry;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -99,6 +104,17 @@ public class EventService {
         return new EventResponse(
                 e.getEventId(), e.getAccountId(), e.getType().name(),
                 e.getAmount(), e.getCurrency(), e.getEventTimestamp(),
-                null, e.isAppliedToAccount(), duplicate);
+                parseMetadata(e.getMetadata()), e.isAppliedToAccount(), duplicate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parseMetadata(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return objectMapper.readValue(raw, Map.class);
+        } catch (Exception ex) {
+            log.warn("failed to parse metadata: {}", ex.getMessage());
+            return null;
+        }
     }
 }

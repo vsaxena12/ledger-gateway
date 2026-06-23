@@ -23,7 +23,7 @@ HTML report: `gateway/target/site/jacoco-unit/index.html`
 | Metric | Coverage |
 |--------|----------|
 | Instruction | 67.5% |
-| Line | 60.1% |
+| Line | 60.2% |
 | Branch | 16.7% |
 | Complexity | 58.0% |
 | Class | 80.0% |
