@@ -17,33 +17,39 @@ Micrometer/Prometheus, Docker Compose.
 ## Architecture
 
 ```mermaid
-graph LR
-    C[Client / Browser] -->|HTTP POST/GET| GW[Event Gateway :8080]
-    GW -->|REST + traceparent| AS[Account Service :8081]
-    GW -->(H2 DB events)
-    AS -->(H2 DB accounts+tx)
+flowchart LR
+    C[Client] -- HTTP --> GW
 
-    subgraph Resilience4j[Resilience4j on Gateway to AS]
-        RT[Retry 3 attempts, exp backoff]
-        BH[Bulkhead Semaphore, max 20]
-        CB[Circuit Breaker 50% threshold, 10s open]
-        RL[Rate Limiter 50 req/s]
+    subgraph GW_GRP[Event Gateway :8080]
+        GW[Ingress + Validation + EventStore]
     end
-    GW --> Res4j[Resilience4j Decorator Chain]
-    Res4j --> AS
 
-    subgraph Observability
-        LOG[JSON Logs traceId + spanId]
-        MTR[Micrometer /actuator/prometheus]
+    subgraph RES4J[Resilience4j]
+        RT[Retry]
+        BH[Bulkhead]
+        CB[CircuitBreaker]
+        RL[RateLimiter]
+    end
+
+    subgraph AS_GRP[Account Service :8081]
+        AS[Balance + Transactions]
+    end
+
+    GW --> RES4J --> AS
+    GW --- DB1[(H2 DB events)]
+    AS --- DB2[(H2 DB accounts)]
+
+    subgraph OBS[Observability]
+        LOG[JSON Logs]
+        MTR[Metrics /actuator/prometheus]
         HTH[Health /actuator/health]
     end
-    GW & AS --> LOG & MTR & HTH
-
-    subgraph BonusTraces[Bonus: Trace Visualization]
-        OC[OTel Collector :4317]
-        JGR[Jaeger UI :16686]
-    end
-    GW & AS -->|OTLP| OC --> JGR
+    GW -.-> LOG
+    GW -.-> MTR
+    GW -.-> HTH
+    AS -.-> LOG
+    AS -.-> MTR
+    AS -.-> HTH
 ```
 
 ```text
