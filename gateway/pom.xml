@@ -79,6 +79,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <argLine>${surefire.argLine}</argLine>
                     <excludes>
                         <exclude>**/contract/**</exclude>
                     </excludes>
