@@ -4,6 +4,8 @@ Two Spring Boot 4.1.1 / Java 26 microservices that process financial
 transaction events with idempotency, out-of-order tolerance, distributed
 tracing, observability, and resiliency.
 
+📄 **[Full design document](docs/superpowers/specs/2026-06-22-event-ledger-design.md)** — architecture, data model, API contracts, and design decisions.
+
 ```
         ┌──────────────────────┐
 Client │  event-gateway       │  :8080 (public)
